@@ -1,12 +1,21 @@
 import { Bell, BriefcaseBusiness, FileText, Heart, HelpCircle, LayoutDashboard, LogOut, Mail, Search, Settings, UserRound, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface CandidateSidebarProps { currentPage: string; onPageChange: (page: string) => void; }
 
 const CandidateSidebar = ({ currentPage, onPageChange }: CandidateSidebarProps) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("role");
+    navigate("/login");
+  };
+
   const items = [
     ["dashboard", "Dashboard", LayoutDashboard], ["find-jobs", "Find Jobs", Search], ["applications", "My Applications", BriefcaseBusiness], ["alerts", "Job Alerts", Bell],
     ["resume", "My Resume", FileText], ["profile", "Profile", UserRound], ["saved", "Saved Jobs", Heart], ["messages", "Messages", Mail, "2"], ["calls", "Interview Calls", Video], ["settings", "Settings", Settings], ["support", "Help & Support", HelpCircle],
   ] as const;
+
   return <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen fixed left-0 top-0 overflow-y-auto hidden md:flex z-20">
     <button onClick={() => onPageChange("dashboard")} className="p-7 text-left text-[20px] font-bold tracking-[-1px]">
         <span className="text-blue-700">Accountant</span><span className="text-emerald-700">Milega</span>
@@ -19,8 +28,15 @@ const CandidateSidebar = ({ currentPage, onPageChange }: CandidateSidebarProps) 
                       {label}</span>{badge && <span className="bg-blue-700 text-white text-[10px] min-w-5 h-5 px-1 grid place-items-center rounded-full">
                         {badge}</span>}</button>; })}</nav>
     <div className="p-4 border-t border-slate-100">
-        <button className="w-full flex items-center gap-4 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg"><LogOut className="w-5 h-5" />
-        Logout</button></div>
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-4 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg"
+      >
+        <LogOut className="w-5 h-5" />
+        Logout
+      </button>
+    </div>
   </aside>;
 };
+
 export default CandidateSidebar;

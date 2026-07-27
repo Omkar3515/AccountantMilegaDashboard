@@ -13,7 +13,16 @@ const jobs = [["CA", "Accountant", "Sharma & Co. Chartered Accountants", "Mumbai
 const CandidateDashboard = () => {
     const [page, setPage] = useState("dashboard");
     const isDashboard = page === "dashboard";
-    return <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900"><CandidateSidebar currentPage={page} onPageChange={setPage} /><main className="flex-1 md:ml-64 min-w-0"><header className="h-16 bg-white border-b border-slate-200 px-5 md:px-7 flex justify-between items-center"><Menu className="w-6 h-6 text-slate-600" /><div className="flex items-center gap-5"><button className="relative"><Bell className="w-5 h-5 text-slate-600" /><span className="absolute -top-2 -right-2 w-4 h-4 text-[9px] grid place-items-center rounded-full bg-blue-700 text-white">3</span></button><div className="h-7 w-px bg-slate-200" /><div className="flex items-center gap-2"><div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-blue-200 text-white grid place-items-center font-bold">RS</div><div className="hidden sm:block"><p className="text-sm font-bold">Rahul Sharma</p><p className="text-xs text-slate-500">Candidate</p></div><ChevronDown className="w-4 h-4 text-slate-500" /></div></div></header>
+    return <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900">
+         <CandidateSidebar currentPage={page} onPageChange={setPage} />
+          <main className="flex-1 md:ml-64 min-w-0">
+             <header className="h-16 bg-white border-b border-slate-200 px-5 md:px-7 flex justify-between items-center">
+                <Menu className="w-6 h-6 text-slate-600" />
+                <div className="flex items-center gap-5">
+                    <button className="relative">
+                        <Bell className="w-5 h-5 text-slate-600" />
+                        <span className="absolute -top-2 -right-2 w-4 h-4 text-[9px] grid place-items-center rounded-full bg-blue-700 text-white">3</span>
+                    </button><div className="h-7 w-px bg-slate-200" /><div className="flex items-center gap-2"><div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-blue-200 text-white grid place-items-center font-bold">RS</div><div className="hidden sm:block"><p className="text-sm font-bold">Rahul Sharma</p><p className="text-xs text-slate-500">Candidate</p></div><ChevronDown className="w-4 h-4 text-slate-500" /></div></div></header>
         <div className="p-5 md:p-7">{isDashboard ? <DashboardContent /> : page === "profile" ? <Profile /> : page === "find-jobs" ? <FindJobs /> : page === "resume" ? <Resume /> : <div className="min-h-[70vh] grid place-items-center text-slate-500"><div className="text-center"><LayoutDashboard className="w-10 h-10 mx-auto mb-3 text-blue-600" /><p className="font-semibold text-slate-700">{page.replace("-", " ")}</p><p className="text-sm mt-1">This page is ready for its content.</p></div></div>}</div>
     </main></div>;
 };

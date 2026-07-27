@@ -1,27 +1,34 @@
 import { Navigate, Routes, Route } from "react-router-dom";
 
-import CandidateLogin from "../pages/auth/CandidateLogin";
-import EmployerLogin from "../pages/auth/EmployerLogin";
-
+import Login from "../pages/auth/Login";
+import ProtectedRoute from "./ProtectedRoute";
 import CandidateDashboard from "../pages/candidate/Dashboard";
 import EmployerDashboard from "../pages/employer/Dashboard";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<CandidateLogin />} />
-      <Route path="/candidate-login" element={<CandidateLogin />} />
-      <Route path="/employer-login" element={<EmployerLogin />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
 
       <Route
         path="/candidate/dashboard"
-        element={<CandidateDashboard />}
+        element={
+          <ProtectedRoute allowedRole="candidate">
+            <CandidateDashboard />
+          </ProtectedRoute>
+        }
       />
 
       <Route
         path="/employer/dashboard"
-        element={<EmployerDashboard />}
+        element={
+          <ProtectedRoute allowedRole="employer">
+            <EmployerDashboard />
+          </ProtectedRoute>
+        }
       />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
