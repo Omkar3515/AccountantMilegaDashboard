@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Award, BriefcaseBusiness, CalendarDays, Camera, CheckCircle2, CircleUserRound, Clock3, Edit3, FileText, Languages, Mail, MapPin, ShieldCheck, Target } from "lucide-react";
+import { ArrowRight, Award, BriefcaseBusiness, CalendarDays, Camera, CheckCircle2, CircleUserRound, Clock3, Mail, MapPin, Target } from "lucide-react";
+import { FileText, Cake, GraduationCap, User, Heart, Languages, ShieldCheck, Edit3 } from "lucide-react";
 
+const InfoRow = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) => (
+  <div className="flex items-center gap-3">
+    <span className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-50 text-blue-700 shrink-0">
+      {icon}
+    </span>
+    <div className="flex items-center justify-between flex-1 min-w-0">
+      <span className="font-medium text-slate-700">{label}</span>
+      <span className="text-slate-500 text-right">{value}</span>
+    </div>
+  </div>
+);
 const ProfileCounter = () => {
   const [value, setValue] = useState(0);
       useEffect(() => { let frame = 0; const start = performance.now(); 
@@ -43,16 +63,37 @@ const Profile = () => <div className="profile-page max-w-[1220px] mx-auto space-
   </div>
      
      <section className="profile-card bg-white border border-slate-200 rounded-xl p-5">
-         <h2 className="font-bold text-sm"><FileText className="w-4 h-4 inline text-blue-700 mr-3" />Professional Summary</h2>
-        <p className="text-sm text-slate-600 leading-6 mt-4">I am a detail-oriented and motivated accounting professional with over 4 years of experience in bookkeeping, taxation, financial reporting, and compliance. Skilled in Tally, GST, Excel and bank reconciliations. Seeking an opportunity to contribute my expertise in a growth-oriented organization.</p>
-        <div className="border-t border-slate-100 mt-3 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600"><p>🎂 <b className="ml-3 font-medium">Date of Birth</b><span className="float-right">15 March 1995</span></p>
-        <p>♧ <b className="ml-3 font-medium">Qualification</b><span className="float-right">B.Com, CA Intermediate</span></p>
-        <p>⚥ <b className="ml-3 font-medium">Gender</b><span className="float-right">Male</span></p>
-        <p>♡ <b className="ml-3 font-medium">Marital Status</b><span className="float-right">Single</span></p>
-        <p><Languages className="w-3.5 h-3.5 inline" /><b className="ml-3 font-medium">Languages Known</b><span className="float-right">English, Hindi, Marathi</span></p>
-        <p><ShieldCheck className="w-3.5 h-3.5 inline" /><b className="ml-3 font-medium">Work Authorization</b><span className="float-right">Indian Citizen</span></p></div>
-        <button className="block mx-auto mt-5 text-xs font-semibold text-blue-700"><Edit3 className="w-3 h-3 inline mr-2" />Edit About Me</button>
-     </section>
+  <div className="h-[3px] w-10 bg-blue-600 rounded-full mb-3" />
+
+  <h2 className="flex items-center gap-2 font-bold text-sm">
+    <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-700">
+      <FileText className="w-3.5 h-3.5" />
+    </span>
+    Professional Summary
+  </h2>
+
+  <p className="text-sm text-slate-600 leading-6 mt-4">
+    I am a detail-oriented and motivated accounting professional with over 4
+    years of experience in bookkeeping, taxation, financial reporting, and
+    compliance. Skilled in Tally, GST, Excel and bank reconciliations. Seeking
+    an opportunity to contribute my expertise in a growth-oriented
+    organization.
+  </p>
+
+  <div className="border-t border-slate-100 mt-4 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-xs">
+    <InfoRow icon={<Cake className="w-3.5 h-3.5" />} label="Date of Birth" value="15 March 1995" />
+    <InfoRow icon={<GraduationCap className="w-3.5 h-3.5" />} label="Qualification" value="B.Com, CA Intermediate" />
+    <InfoRow icon={<User className="w-3.5 h-3.5" />} label="Gender" value="Male" />
+    <InfoRow icon={<Heart className="w-3.5 h-3.5" />} label="Marital Status" value="Single" />
+    <InfoRow icon={<Languages className="w-3.5 h-3.5" />} label="Languages Known" value="English, Hindi, Marathi" />
+    <InfoRow icon={<ShieldCheck className="w-3.5 h-3.5" />} label="Work Authorization" value="Indian Citizen" />
+  </div>
+
+  <button className="flex items-center gap-2 mx-auto mt-5 text-xs font-semibold text-blue-700">
+    <Edit3 className="w-3 h-3" />
+    Edit About Me
+  </button>
+</section>
 
     <section className="profile-card bg-white border border-slate-200 rounded-xl p-5">
       <div className="flex justify-between">

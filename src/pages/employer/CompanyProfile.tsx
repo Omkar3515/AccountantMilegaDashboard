@@ -1,5 +1,6 @@
 import { Eye, Edit3, MapPin, Calendar, Users, CheckCircle2, Building2, Briefcase, FileText, Globe, Image as ImageIcon, Circle, Check, Users2, Shield, Star, Award } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import map from "../../assets/map.png.png"
 
 const CompanyProfile = () => {
   const tabs = ['Company Information', 'Team Members', 'Hiring Preferences', 'Social & Links', 'Verification'];
@@ -150,14 +151,8 @@ const CompanyProfile = () => {
                   Mumbai - 400069, Maharashtra, India
                 </p>
               </div>
-              <div className="h-32 bg-gray-100 rounded-xl border border-gray-200 overflow-hidden relative">
-                {/* Mock Map Background */}
-                <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E")' }}></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-10 h-10 bg-brand-green/20 rounded-full flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-brand-green fill-brand-light" />
-                  </div>
-                </div>
+              <div className="h-32 rounded-xl border border-gray-200 overflow-hidden">
+                 <img src={map} alt="Office Location" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>

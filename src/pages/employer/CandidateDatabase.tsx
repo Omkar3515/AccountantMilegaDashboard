@@ -15,7 +15,7 @@ const CandidateDatabase = () => {
       skills: ['Tally', 'Excel', 'GST', 'Data Entry', 'MS Office', '+1']
     },
     {
-      id: 'AM07531', name: 'Pooja Singh', role: 'Tax Executive', verified: false, exp: '4.1 Years', loc: 'Nagpur, Maharashtra', sal: '₹ 5.2 LPA', score: '74%', match: 'Good Match', scoreColor: 'text-brand-green', img: 'https://i.pravatar.cc/150?u=a04258a2462d826712d', initials: 'PS',
+      id: 'AM07531', name: 'Pooja Singh', role: 'Tax Executive', verified: false, exp: '4.1 Years', loc: 'Nagpur, Maharashtra', sal: '₹ 5.2 LPA', score: '74%', match: 'Good Match', scoreColor: 'text-brand-green', img: 'https://i.pravatar.cc/150?u=a04258114e29026702d', initials: 'PS',
       skills: ['GST', 'Income Tax', 'TDS', 'Excel', 'Return Filing', '+2']
     },
   ];
@@ -147,13 +147,13 @@ const CandidateDatabase = () => {
             </div>
           </div>
           <div className="lg:col-span-2 flex items-end justify-end gap-4 mt-2 lg:mt-0">
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <button className="flex items-center gap-2 px-4 py-1 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">
               <SlidersHorizontal className="w-4 h-4" /> More Filters
             </button>
-            <button className="text-sm font-semibold text-brand-green hover:underline px-2">
+            <button className="text-sm font-semibold text-brand-green hover:underline px-2 py-1">
               Clear Filters
             </button>
-            <button className="px-6 py-2 bg-brand-green text-white rounded-lg text-sm font-bold hover:bg-brand-green/90 shadow-sm shadow-brand-green/20">
+            <button className="px-5 py-2 bg-brand-green text-white rounded-lg text-sm font-bold hover:bg-brand-green/90 shadow-sm shadow-brand-green/20">
               Search Candidates
             </button>
           </div>
@@ -347,10 +347,10 @@ const CandidateDatabase = () => {
           </div>
 
           {/* Upgrade Banner */}
-          <div className="bg-brand-light rounded-2xl border border-brand-green/20 p-5 text-center">
-            <div className="w-10 h-10 bg-brand-green/10 rounded-full flex items-center justify-center mx-auto mb-3">
+       <div className="bg-[#F6F5EF] rounded-2xl border border-brand-green/20 p-5 text-center">
+            <div className="w-10 h-10 bg-[#F5E7BD] rounded-full flex items-center justify-center mx-auto mb-3">
               {/* Crown Icon placeholder */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-green"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#F5AB0F]"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
             </div>
             <h3 className="text-sm font-bold text-gray-900 mb-2">Upgrade to Access More</h3>
             <p className="text-xs text-gray-600 mb-4 px-2">Get access to unlimited candidate contacts and advanced filters.</p>

@@ -4,7 +4,7 @@ const applicants = [
   { name: 'Rahul Sharma', role: 'Accountant', roleColor: 'text-brand-green', time: '2 hrs ago', status: 'New', img: 'https://i.pravatar.cc/150?u=a042581f4e29026024d' },
   { name: 'Neha Patil', role: 'Senior Accountant', roleColor: 'text-brand-green', time: '4 hrs ago', status: 'New', img: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
   { name: 'Amit Verma', role: 'Tax Executive', roleColor: 'text-brand-green', time: '6 hrs ago', status: 'New', img: 'https://i.pravatar.cc/150?u=a048581f4e29026701d' },
-  { name: 'Pooja Singh', role: 'Junior Accountant', roleColor: 'text-brand-green', time: '1 day ago', status: 'New', img: 'https://i.pravatar.cc/150?u=a04258a2462d826712d' },
+  { name: 'Pooja Singh', role: 'Junior Accountant', roleColor: 'text-brand-green', time: '1 day ago', status: 'New', img: 'https://i.pravatar.cc/150?u=a042581f4e29026703d' },
 ];
 
 const RecentApplications = () => {

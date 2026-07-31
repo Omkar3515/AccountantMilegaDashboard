@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 
 const interviews = [
-  { time: '10:00 AM', name: 'Sandeep Kumar', role: 'Accountant', round: 'Technical Round', status: 'Scheduled', img: 'https://i.pravatar.cc/150?u=a042581f4e29026703d' },
+  { time: '10:00 AM', name: 'Sandeep Kumar', role: 'Accountant', round: 'Technical Round', status: 'Scheduled', img: 'https://i.pravatar.cc/150?u=a04258a2462d826712d' },
   { time: '11:30 AM', name: 'Priya Deshmukh', role: 'Senior Accountant', round: 'HR Round', status: 'Scheduled', img: 'https://i.pravatar.cc/150?u=a04258114e29026702d' },
   { time: '02:00 PM', name: 'Vikram Joshi', role: 'Tax Executive', round: 'Technical Round', status: 'Scheduled', img: 'https://i.pravatar.cc/150?u=a048581f4e29026701d' },
 ];

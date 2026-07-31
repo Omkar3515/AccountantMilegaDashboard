@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 
 const candidates = [
   { name: 'Ankit Tiwari', exp: '4.2 Yrs Exp.', salary: '₹ 4 - 6 LPA', score: '92%', skills: 'Tally, GST, Excel, Bank Reconciliation', img: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-  { name: 'Megha Kulkarni', exp: '3.6 Yrs Exp.', salary: '₹ 3.5 - 5 LPA', score: '88%', skills: 'Tally, Taxation, Excel, MIS Reporting', img: 'https://i.pravatar.cc/150?u=a042581f4e29026702d' },
+  { name: 'Megha Kulkarni', exp: '3.6 Yrs Exp.', salary: '₹ 3.5 - 5 LPA', score: '88%', skills: 'Tally, Taxation, Excel, MIS Reporting', img: 'https://i.pravatar.cc/150?u=a042581f4e29026703d' },
 ];
 
 const RecommendedCandidates = () => {
