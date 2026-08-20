@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Bell, Bookmark, BriefcaseBusiness, CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Crown, FileText, LayoutDashboard, MapPin, Menu, Search, Send, UserRound, View } from "lucide-react";
+import { ArrowRight, Bell, Bookmark, BriefcaseBusiness, CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Crown, FileText, LayoutDashboard, LogOut, MapPin, Menu, Search, Send, UserRound, View } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import CandidateSidebar from "../../components/layout/CandidateSidebar";
 import Profile from "./Profile";
 import FindJobs from "./FindJobs";
 import Resume from "./Resume";
+import { getStoredUser, getInitials, logoutUser, type UserProfile } from "../../services/authService";
 
 const stats = [
     ["12", "Applications", "Total Applied", BriefcaseBusiness, "text-blue-700", "bg-blue-100"], ["3", "Shortlisted", "Moving Forward", CheckCircle2, "text-emerald-600", "bg-emerald-100"], ["2", "Interviews", "Upcoming", CalendarDays, "text-violet-600", "bg-violet-100"], ["8", "Saved Jobs", "Bookmarked", Bookmark, "text-amber-500", "bg-amber-100"],
@@ -11,7 +13,24 @@ const stats = [
 const jobs = [["CA", "Accountant", "Sharma & Co. Chartered Accountants", "Mumbai, Maharashtra", "2-4 Yrs", "₹3 - 5 LPA", "2h ago", "bg-blue-700"], ["FinTax", "Junior Accountant", "Fintax Solutions Pvt. Ltd.", "Pune, Maharashtra", "1-3 Yrs", "₹2.4 - 3.6 LPA", "5h ago", "bg-emerald-50 text-emerald-700"], ["SK", "Accounts Executive", "SK Enterprises", "Nagpur, Maharashtra", "2-5 Yrs", "₹3 - 4.5 LPA", "1d ago", "bg-amber-500"]] as const;
 
 const CandidateDashboard = () => {
+    const navigate = useNavigate();
     const [page, setPage] = useState("dashboard");
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [showDropdown, setShowDropdown] = useState(false);
+
+    useEffect(() => {
+        setUser(getStoredUser());
+    }, []);
+
+    const handleLogout = () => {
+        logoutUser();
+        navigate("/login");
+    };
+
+    const displayName = user?.fullName || "Rahul Sharma";
+    const initials = getInitials(displayName);
+    const firstName = displayName.split(" ")[0];
+
     const isDashboard = page === "dashboard";
     return <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900">
          <CandidateSidebar currentPage={page} onPageChange={setPage} />
@@ -22,8 +41,37 @@ const CandidateDashboard = () => {
                     <button className="relative">
                         <Bell className="w-5 h-5 text-slate-600" />
                         <span className="absolute -top-2 -right-2 w-4 h-4 text-[9px] grid place-items-center rounded-full bg-blue-700 text-white">3</span>
-                    </button><div className="h-7 w-px bg-slate-200" /><div className="flex items-center gap-2"><div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-blue-200 text-white grid place-items-center font-bold">RS</div><div className="hidden sm:block"><p className="text-sm font-bold">Rahul Sharma</p><p className="text-xs text-slate-500">Candidate</p></div><ChevronDown className="w-4 h-4 text-slate-500" /></div></div></header>
-        <div className="p-5 md:p-7">{isDashboard ? <DashboardContent /> : page === "profile" ? <Profile /> : page === "find-jobs" ? <FindJobs /> : page === "resume" ? <Resume /> : <div className="min-h-[70vh] grid place-items-center text-slate-500"><div className="text-center"><LayoutDashboard className="w-10 h-10 mx-auto mb-3 text-blue-600" /><p className="font-semibold text-slate-700">{page.replace("-", " ")}</p><p className="text-sm mt-1">This page is ready for its content.</p></div></div>}</div>
+                    </button>
+                    <div className="h-7 w-px bg-slate-200" />
+                    <div className="relative">
+                        <div
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => setShowDropdown(!showDropdown)}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-blue-200 text-white grid place-items-center font-bold">
+                                {initials}
+                            </div>
+                            <div className="hidden sm:block text-left">
+                                <p className="text-sm font-bold">{displayName}</p>
+                                <p className="text-xs text-slate-500 capitalize">{user?.role || "Candidate"}</p>
+                            </div>
+                            <ChevronDown className="w-4 h-4 text-slate-500" />
+                        </div>
+
+                        {showDropdown && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium"
+                                >
+                                    <LogOut className="w-4 h-4" /> Log out
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </header>
+        <div className="p-5 md:p-7">{isDashboard ? <DashboardContent firstName={firstName} /> : page === "profile" ? <Profile /> : page === "find-jobs" ? <FindJobs /> : page === "resume" ? <Resume /> : <div className="min-h-[70vh] grid place-items-center text-slate-500"><div className="text-center"><LayoutDashboard className="w-10 h-10 mx-auto mb-3 text-blue-600" /><p className="font-semibold text-slate-700">{page.replace("-", " ")}</p><p className="text-sm mt-1">This page is ready for its content.</p></div></div>}</div>
     </main></div>;
 };
 
@@ -44,9 +92,9 @@ const AnimatedNumber = ({ value }: { value: string }) => {
     return <>{count}</>;
 };
 
-const DashboardContent = () => <div className="candidate-dashboard max-w-[1220px] mx-auto space-y-6">
+const DashboardContent = ({ firstName }: { firstName: string }) => <div className="candidate-dashboard max-w-[1220px] mx-auto space-y-6">
     <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-        <div><h1 className="text-2xl font-bold tracking-tight">Welcome back, Rahul! 👋</h1>
+        <div><h1 className="text-2xl font-bold tracking-tight">Welcome back, {firstName}! 👋</h1>
              <p className="text-sm text-slate-500 mt-1">Explore jobs and build your career with AccountantMilega</p></div>
        <div className="flex items-center gap-3">
          <div className="bg-white border border-slate-200 rounded-xl px-5 py-3 w-full sm:w-[365px]">
