@@ -20,6 +20,7 @@ import {
   saveHiringPreferences,
   saveSocialLinks,
   saveVerification,
+  uploadCompanyLogoApi,
   type CompanyProfileData,
   type CompanyAddressData,
   type TeamMemberData,
@@ -41,6 +42,24 @@ const CompanyProfile: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (file: File) => {
+    try {
+      setIsUploadingLogo(true);
+      const formData = new FormData();
+      formData.append('logo', file);
+      const res = await uploadCompanyLogoApi(formData);
+      if (res.success && res.data?.logoUrl) {
+        setProfile((prev) => (prev ? { ...prev, logoUrl: res.data!.logoUrl } : prev));
+      }
+    } catch (err) {
+      console.error('Logo upload failed:', err);
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -110,21 +129,22 @@ const CompanyProfile: React.FC = () => {
     socialLinks: SocialLinkData;
     verification: VerificationData;
   }) => {
-    await Promise.all([
-      saveCompanyProfile(formData.profile),
-      saveCompanyAddress(formData.address),
-      saveTeamMembers(formData.teamMembers),
-      saveHiringPreferences(formData.hiringPreferences),
-      saveSocialLinks(formData.socialLinks),
-      saveVerification(formData.verification),
-    ]);
+    const [savedProfile, savedAddress, savedTeamMembers, savedHiring, savedSocial, savedVerification] =
+      await Promise.all([
+        saveCompanyProfile(formData.profile),
+        saveCompanyAddress(formData.address),
+        saveTeamMembers(formData.teamMembers),
+        saveHiringPreferences(formData.hiringPreferences),
+        saveSocialLinks(formData.socialLinks),
+        saveVerification(formData.verification),
+      ]);
 
-    setProfile(formData.profile);
-    setAddress(formData.address);
-    setTeamMembers(formData.teamMembers);
-    setHiringPreferences(formData.hiringPreferences);
-    setSocialLinks(formData.socialLinks);
-    setVerification(formData.verification);
+    setProfile(savedProfile ?? formData.profile);
+    setAddress(savedAddress ?? formData.address);
+    setTeamMembers(savedTeamMembers ?? formData.teamMembers);
+    setHiringPreferences(savedHiring ?? formData.hiringPreferences);
+    setSocialLinks(savedSocial ?? formData.socialLinks);
+    setVerification(savedVerification ?? formData.verification);
   };
 
   const [formTabName, setFormTabName] = useState<string | undefined>(undefined);
@@ -196,7 +216,7 @@ const CompanyProfile: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Main Content Column */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* TAB 0: Company Information */}
           {activeTab === 0 && (
             <>
@@ -204,6 +224,8 @@ const CompanyProfile: React.FC = () => {
                 profile={profile}
                 verification={verification}
                 onEdit={() => handleOpenFormWithTab(0, 'Company Information')}
+                onLogoUpload={handleLogoUpload}
+                isUploadingLogo={isUploadingLogo}
               />
               <CompanyAddressCard
                 address={address}

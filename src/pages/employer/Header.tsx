@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Bell, Mail, ChevronDown, Menu, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getStoredUser, getInitials, logoutUser, type UserProfile } from "../../services/authService";
@@ -7,11 +7,27 @@ const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const currentUser = getStoredUser();
     setUser(currentUser);
   }, []);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleLogout = () => {
     logoutUser();
@@ -42,7 +58,7 @@ const Header = () => {
 
         <div className="h-8 w-px bg-gray-200"></div>
 
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <div
             className="flex items-center gap-3 cursor-pointer"
             onClick={() => setShowDropdown(!showDropdown)}

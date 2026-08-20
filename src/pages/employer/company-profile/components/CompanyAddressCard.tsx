@@ -1,7 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MapPin, Edit3 } from 'lucide-react';
+import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import map from '../../../../assets/map.png.png';
 import type { CompanyAddressData } from '../services/employerService';
+
+// Fix Leaflet default marker icon path issue in Vite
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Helper component to force Leaflet to recalculate container size when rendered
+const MapResizer: React.FC = () => {
+  const leafletMap = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      leafletMap.invalidateSize();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [leafletMap]);
+  return null;
+};
 
 interface CompanyAddressCardProps {
   address: CompanyAddressData | null;
@@ -12,6 +35,12 @@ const CompanyAddressCard: React.FC<CompanyAddressCardProps> = ({ address, onEdit
   const addressLine = address?.registeredAddress || '-';
   const cityState = [address?.city, address?.state, address?.pincode].filter(Boolean).join(', ') || '-';
   const country = address?.country || '-';
+
+  const lat = address?.latitude != null ? Number(address.latitude) : null;
+  const lng = address?.longitude != null ? Number(address.longitude) : null;
+
+  const hasCoordinates =
+    lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
@@ -42,8 +71,27 @@ const CompanyAddressCard: React.FC<CompanyAddressCardProps> = ({ address, onEdit
             </p>
           )}
         </div>
-        <div className="h-32 rounded-xl border border-gray-200 overflow-hidden">
-          <img src={map} alt="Office Location" className="w-full h-full object-cover" />
+
+        <div className="h-44 w-full rounded-xl border border-gray-200 overflow-hidden relative z-0 isolate shadow-xs">
+          {hasCoordinates && lat !== null && lng !== null ? (
+            <MapContainer
+              key={`${lat}-${lng}`}
+              center={[lat, lng]}
+              zoom={15}
+              scrollWheelZoom={false}
+              dragging={false}
+              doubleClickZoom={false}
+              zoomControl={false}
+              attributionControl={false}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <MapResizer />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[lat, lng]} />
+            </MapContainer>
+          ) : (
+            <img src={map} alt="Office Location Map" className="w-full h-full object-cover" />
+          )}
         </div>
       </div>
     </div>

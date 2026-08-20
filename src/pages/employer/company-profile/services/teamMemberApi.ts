@@ -1,5 +1,5 @@
 import { getAuthToken } from '../../../../services/authService';
-import { fetchEmployerProfile, getCachedProfileData, saveCachedProfileData } from './companyProfileApi';
+import { getCachedProfileData, saveCachedProfileData } from './companyProfileApi';
 
 const API_BASE_URL = 'http://localhost:5000/api/employer';
 
@@ -55,17 +55,21 @@ export const deleteTeamMember = async (id: string): Promise<boolean> => {
   const token = getAuthToken();
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/team-members/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/team-members/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (!response.ok) {
+        console.error('Delete Team Member API failed with status:', response.status);
+      }
     } catch (err) {
       console.error('Delete Team Member API error:', err);
     }
   }
 
+  // Always update local cache to remove the member immediately
   const current = getCachedProfileData();
   const updated = {
     ...current,

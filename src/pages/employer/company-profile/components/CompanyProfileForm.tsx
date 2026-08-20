@@ -8,6 +8,7 @@ import type {
   SocialLinkData,
   VerificationData,
 } from '../services/employerService';
+import { deleteTeamMember } from '../services/employerService';
 
 interface CompanyProfileFormProps {
   initialProfile: CompanyProfileData | null;
@@ -66,6 +67,8 @@ const CompanyProfileForm: React.FC<CompanyProfileFormProps> = ({
     website: initialProfile?.website || '',
     location: initialProfile?.location || '',
     description: initialProfile?.description || '',
+    logoUrl: initialProfile?.logoUrl || '',
+    bannerUrl: initialProfile?.bannerUrl || '',
   });
 
   const [address, setAddress] = useState<CompanyAddressData>({
@@ -133,8 +136,19 @@ const CompanyProfileForm: React.FC<CompanyProfileFormProps> = ({
     setNewMember({ name: '', designation: '', email: '', phone: '', role: 'Member' });
   };
 
-  const handleRemoveTeamMember = (index: number) => {
-    setTeamMembers(teamMembers.filter((_, i) => i !== index));
+  const handleRemoveTeamMember = async (index: number) => {
+    const member = teamMembers[index];
+    const memberId = member._id || member.id;
+    // If member has a DB _id, call API to delete from backend
+    if (member._id) {
+      try {
+        await deleteTeamMember(member._id);
+      } catch (err) {
+        console.error('Failed to delete team member from backend:', err);
+      }
+    }
+    // Remove from local state regardless
+    setTeamMembers((prev) => prev.filter((_, i) => i !== index));
   };
 
   const toggleWorkMode = (mode: string) => {
@@ -203,7 +217,7 @@ const CompanyProfileForm: React.FC<CompanyProfileFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto font-sans">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 overflow-y-auto font-sans">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Header */}

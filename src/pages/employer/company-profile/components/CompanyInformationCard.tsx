@@ -1,20 +1,41 @@
-import React from 'react';
-import { Building2, Image as ImageIcon, CheckCircle2, MapPin, Calendar, Users, Briefcase, FileText, Globe, Edit3 } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Building2, Image as ImageIcon, CheckCircle2, MapPin, Calendar, Users, Briefcase, FileText, Globe, Edit3, Loader2 } from 'lucide-react';
 import type { CompanyProfileData, VerificationData } from '../services/employerService';
 
 interface CompanyInformationCardProps {
   profile: CompanyProfileData | null;
   verification?: VerificationData | null;
   onEdit?: () => void;
+  onLogoUpload?: (file: File) => Promise<void>;
+  isUploadingLogo?: boolean;
 }
 
-const CompanyInformationCard: React.FC<CompanyInformationCardProps> = ({ profile, verification, onEdit }) => {
+const CompanyInformationCard: React.FC<CompanyInformationCardProps> = ({
+  profile,
+  verification,
+  onEdit,
+  onLogoUpload,
+  isUploadingLogo = false,
+}) => {
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const companyName = profile?.companyName || '-';
   const tagline = profile?.tagline || '-';
   const location = profile?.location || '-';
   const establishmentYear = profile?.establishmentYear ? `Founded in ${profile.establishmentYear}` : '-';
   const companySize = profile?.companySize || '-';
   const description = profile?.description || 'No description provided yet.';
+
+  const handleLogoClick = () => {
+    logoInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onLogoUpload) {
+      onLogoUpload(file);
+    }
+  };
 
   const details = [
     { label: 'Industry', value: profile?.industry || '-', icon: Building2 },
@@ -29,6 +50,14 @@ const CompanyInformationCard: React.FC<CompanyInformationCardProps> = ({ profile
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 relative">
+      <input
+        type="file"
+        ref={logoInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
           <Building2 className="w-5 h-5 text-gray-400" /> Company Information
@@ -44,12 +73,30 @@ const CompanyInformationCard: React.FC<CompanyInformationCardProps> = ({ profile
       </div>
 
       <div className="flex items-start gap-6 mb-8">
-        <div className="relative">
-          <div className="w-24 h-24 bg-brand-light text-brand-green rounded-xl flex items-center justify-center text-3xl font-bold border border-brand-green/20">
-            {companyName !== '-' ? companyName.substring(0, 2).toUpperCase() : 'CP'}
-          </div>
-          <button className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-full border border-gray-200 text-brand-green shadow-sm hover:bg-gray-50">
-            <ImageIcon className="w-4 h-4" />
+        <div className="relative group">
+          {profile?.logoUrl ? (
+            <img
+              src={profile.logoUrl}
+              alt={companyName}
+              className="w-24 h-24 object-cover rounded-xl border border-gray-200 shadow-xs bg-white"
+            />
+          ) : (
+            <div className="w-24 h-24 bg-brand-light text-brand-green rounded-xl flex items-center justify-center text-3xl font-bold border border-brand-green/20">
+              {companyName !== '-' ? companyName.substring(0, 2).toUpperCase() : 'CP'}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleLogoClick}
+            disabled={isUploadingLogo}
+            title="Upload / Change Company Logo"
+            className="absolute -bottom-2 -right-2 bg-white p-2 rounded-full border border-gray-200 text-brand-green shadow-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {isUploadingLogo ? (
+              <Loader2 className="w-4 h-4 animate-spin text-brand-green" />
+            ) : (
+              <ImageIcon className="w-4 h-4 text-brand-green" />
+            )}
           </button>
         </div>
         <div className="flex-1">

@@ -17,7 +17,7 @@ export const saveSocialLinks = async (
   const token = getAuthToken();
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/social-links`, {
+      const response = await fetch(`${API_BASE_URL}/social-links`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -25,6 +25,12 @@ export const saveSocialLinks = async (
         },
         body: JSON.stringify(social),
       });
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success && json.data) {
+          social = json.data;
+        }
+      }
     } catch {
       // Fall back to local update
     }

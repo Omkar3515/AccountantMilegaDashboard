@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ArrowRight,
   Award,
@@ -25,6 +25,11 @@ import {
   X,
   Cake,
   FileCheck2,
+  Upload,
+  Download,
+  ExternalLink,
+  Eye,
+  Paperclip,
 } from "lucide-react";
 import {
   getCandidateProfileApi,
@@ -43,6 +48,9 @@ import {
   addCandidateAchievementApi,
   deleteCandidateAchievementApi,
   updateCandidatePreferencesApi,
+  uploadCandidateAvatarApi,
+  uploadCandidateDocumentApi,
+  deleteCandidateDocumentApi,
 } from "../../services/candidateService";
 import type {
   CandidateProfileData,
@@ -53,6 +61,7 @@ import type {
   CandidateCertification,
   CandidateAchievement,
   CandidatePreference,
+  CandidateDocument,
 } from "../../services/candidateService";
 
 const formatDateForDisplay = (dateStr?: string) => {
@@ -65,40 +74,56 @@ const formatDateForDisplay = (dateStr?: string) => {
   return dateStr;
 };
 
+const parseMonthAndYear = (dateStr?: string, isEnd = false): { year: number; month: number } => {
+  const now = new Date();
+  if (!dateStr || dateStr.trim().toLowerCase() === "present" || dateStr.trim().toLowerCase() === "till date") {
+    return { year: now.getFullYear(), month: now.getMonth() };
+  }
+
+  const str = dateStr.trim();
+  const yearMatch = str.match(/\b(19|20)\d{2}\b/);
+  const year = yearMatch ? parseInt(yearMatch[0], 10) : 0;
+
+  const monthMap: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+
+  const lowerStr = str.toLowerCase();
+  const textMonthMatch = lowerStr.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
+
+  let month = isEnd ? 11 : 0;
+
+  if (textMonthMatch) {
+    month = monthMap[textMonthMatch[0]];
+  } else {
+    // Check for numeric month e.g. 06/2020 or 6-2020 or 2020-06
+    const slashParts = str.split(/[\/\-\.]/);
+    if (slashParts.length >= 2) {
+      const p0 = parseInt(slashParts[0], 10);
+      const p1 = parseInt(slashParts[1], 10);
+      if (p0 >= 1 && p0 <= 12) month = p0 - 1;
+      else if (p1 >= 1 && p1 <= 12) month = p1 - 1;
+    }
+  }
+
+  return { year, month };
+};
+
 // Dynamic Total Experience Calculator from candidate work experience entries
 const calculateTotalExperience = (exps: CandidateExperience[]): string => {
   if (!exps || exps.length === 0) return "-";
 
   let totalMonths = 0;
-  const monthNames: Record<string, number> = {
-    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-  };
 
   exps.forEach((exp) => {
-    let startYear = 0;
-    let startMonth = 0;
-    let endYear = new Date().getFullYear();
-    let endMonth = new Date().getMonth();
+    const isExpCurrent = exp.isCurrent === true || exp.endDate?.trim().toLowerCase() === "present";
 
-    if (exp.startDate) {
-      const yearMatch = exp.startDate.match(/\d{4}/);
-      if (yearMatch) startYear = parseInt(yearMatch[0], 10);
+    const { year: startYear, month: startMonth } = parseMonthAndYear(exp.startDate, false);
+    const { year: endYear, month: endMonth } = parseMonthAndYear(isExpCurrent ? "Present" : exp.endDate, true);
 
-      const monthMatch = exp.startDate.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
-      if (monthMatch) startMonth = monthNames[monthMatch[0]];
-    }
-
-    if (!exp.isCurrent && exp.endDate && exp.endDate.toLowerCase() !== "present") {
-      const yearMatch = exp.endDate.match(/\d{4}/);
-      if (yearMatch) endYear = parseInt(yearMatch[0], 10);
-
-      const monthMatch = exp.endDate.toLowerCase().match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/);
-      if (monthMatch) endMonth = monthNames[monthMatch[0]];
-    }
-
-    if (startYear > 0) {
-      const months = (endYear - startYear) * 12 + (endMonth - startMonth);
+    if (startYear > 0 && endYear >= startYear) {
+      const months = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
       if (months > 0) totalMonths += months;
     }
   });
@@ -154,9 +179,39 @@ const ProfileCounter = ({ percent }: { percent: number }) => {
     return () => cancelAnimationFrame(frame);
   }, [percent]);
 
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (value / 100) * circumference;
+
   return (
-    <div className="w-16 h-16 rounded-full border-4 border-blue-600 flex items-center justify-center font-bold text-blue-700 text-lg bg-blue-50/50">
-      <span>{value}%</span>
+    <div className="relative w-16 h-16 flex items-center justify-center">
+      <svg className="w-16 h-16 transform -rotate-90">
+        {/* Background Ring */}
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          stroke="#e2e8f0"
+          strokeWidth="4"
+          fill="transparent"
+        />
+        {/* Progress Fill Ring */}
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          stroke="#1d4ed8"
+          strokeWidth="4"
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-300 ease-out"
+        />
+      </svg>
+      <span className="absolute font-bold text-blue-700 text-sm">
+        {value}%
+      </span>
     </div>
   );
 };
@@ -171,10 +226,23 @@ const Profile = () => {
   const [educations, setEducations] = useState<CandidateEducation[]>([]);
   const [certifications, setCertifications] = useState<CandidateCertification[]>([]);
   const [achievements, setAchievements] = useState<CandidateAchievement[]>([]);
+  const [documents, setDocuments] = useState<CandidateDocument[]>([]);
   const [preferences, setPreferences] = useState<CandidatePreference | null>(null);
 
   // Accountant skill suggestions
   const [skillSuggestions, setSkillSuggestions] = useState<string[]>([]);
+
+  // Avatar Upload State & Ref
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Document Upload & Modal State & Ref
+  const docFileInputRef = useRef<HTMLInputElement>(null);
+  const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [docPreset, setDocPreset] = useState("Resume");
+  const [docCustomTitle, setDocCustomTitle] = useState("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
 
   // Modals state
   const [isEditAboutOpen, setIsEditAboutOpen] = useState(false);
@@ -187,9 +255,14 @@ const Profile = () => {
   // Education modal state (supports both Add & Edit)
   const [isEduModalOpen, setIsEduModalOpen] = useState(false);
   const [editingEduId, setEditingEduId] = useState<string | null>(null);
+  const [uploadingEduDoc, setUploadingEduDoc] = useState(false);
 
   const [isAddCertOpen, setIsAddCertOpen] = useState(false);
+  const [uploadingCertDoc, setUploadingCertDoc] = useState(false);
+
   const [isAddAchieveOpen, setIsAddAchieveOpen] = useState(false);
+  const [uploadingAchieveDoc, setUploadingAchieveDoc] = useState(false);
+
   const [isEditPrefOpen, setIsEditPrefOpen] = useState(false);
 
   // Form states
@@ -228,6 +301,7 @@ const Profile = () => {
     startYear: "",
     endYear: "",
     grade: "",
+    fileUrl: "",
   });
 
   const [certForm, setCertForm] = useState({
@@ -235,6 +309,7 @@ const Profile = () => {
     issuingOrganization: "",
     issueDate: "",
     credentialId: "",
+    fileUrl: "",
   });
 
   const [achieveForm, setAchieveForm] = useState({
@@ -242,6 +317,7 @@ const Profile = () => {
     organization: "",
     date: "",
     description: "",
+    fileUrl: "",
   });
 
   const [prefForm, setPrefForm] = useState({
@@ -251,42 +327,175 @@ const Profile = () => {
     expectedSalary: "",
   });
 
+  // Handlers for S3 uploads
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingAvatar(true);
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const res = await uploadCandidateAvatarApi(formData);
+      if (res.success && res.data?.avatar) {
+        setProfile((prev) => (prev ? { ...prev, avatar: res.data.avatar } : prev));
+      }
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    } finally {
+      setUploadingAvatar(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  const handleUploadDocumentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docFile) return;
+    const titleToUse = docPreset === "Other" ? docCustomTitle.trim() : docPreset;
+    if (!titleToUse) return;
+
+    try {
+      setUploadingDoc(true);
+      const formData = new FormData();
+      formData.append("document", docFile);
+      formData.append("title", titleToUse);
+      const res = await uploadCandidateDocumentApi(formData);
+      if (res.success && res.data) {
+        setDocuments((prev) => {
+          const filtered = prev.filter(
+            (d) => d.title.toLowerCase().trim() !== titleToUse.toLowerCase().trim()
+          );
+          return [...filtered, res.data];
+        });
+        setDocFile(null);
+        setDocCustomTitle("");
+        if (docFileInputRef.current) docFileInputRef.current.value = "";
+      }
+    } catch (err) {
+      console.error("Document upload failed:", err);
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    try {
+      await deleteCandidateDocumentApi(id);
+      setDocuments((prev) => prev.filter((d) => d._id !== id));
+    } catch (err) {
+      console.error("Document delete failed:", err);
+    }
+  };
+
+  const handleEduDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingEduDoc(true);
+      const formData = new FormData();
+      formData.append("document", file);
+      formData.append("title", `Education Certificate - ${eduForm.degree || "Degree"}`);
+      const res = await uploadCandidateDocumentApi(formData);
+      if (res.success && res.data) {
+        setEduForm((prev) => ({ ...prev, fileUrl: res.data.fileUrl }));
+        setDocuments((prev) => [...prev, res.data]);
+      }
+    } catch (err) {
+      console.error("Education document upload failed:", err);
+    } finally {
+      setUploadingEduDoc(false);
+    }
+  };
+
+  const handleCertDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingCertDoc(true);
+      const formData = new FormData();
+      formData.append("document", file);
+      formData.append("title", `Certification Document - ${certForm.title || "Cert"}`);
+      const res = await uploadCandidateDocumentApi(formData);
+      if (res.success && res.data) {
+        setCertForm((prev) => ({ ...prev, fileUrl: res.data.fileUrl }));
+        setDocuments((prev) => [...prev, res.data]);
+      }
+    } catch (err) {
+      console.error("Certification document upload failed:", err);
+    } finally {
+      setUploadingCertDoc(false);
+    }
+  };
+
+  const handleAchieveDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingAchieveDoc(true);
+      const formData = new FormData();
+      formData.append("document", file);
+      formData.append("title", `Achievement Document - ${achieveForm.title || "Achievement"}`);
+      const res = await uploadCandidateDocumentApi(formData);
+      if (res.success && res.data) {
+        setAchieveForm((prev) => ({ ...prev, fileUrl: res.data.fileUrl }));
+        setDocuments((prev) => [...prev, res.data]);
+      }
+    } catch (err) {
+      console.error("Achievement document upload failed:", err);
+    } finally {
+      setUploadingAchieveDoc(false);
+    }
+  };
+
   const fetchProfileData = async () => {
     try {
       setLoading(true);
       const res = await getCandidateProfileApi();
       if (res.success && res.data) {
+        const profileDoc = res.data.profile;
+        const prefObj = res.data.preferences || profileDoc?.preferences || null;
+        const skillsArr = res.data.skills || profileDoc?.skills || [];
+        const expArr = res.data.experiences || profileDoc?.experiences || [];
+        const eduArr = res.data.educations || profileDoc?.educations || [];
+        const certArr = res.data.certifications || profileDoc?.certifications || [];
+        const achArr = res.data.achievements || profileDoc?.achievements || [];
+        const docsArr = profileDoc?.documents || [];
+
         setUser(res.data.user);
-        setProfile(res.data.profile);
-        setSkills(res.data.skills || []);
-        setExperiences(res.data.experiences || []);
-        setEducations(res.data.educations || []);
-        setCertifications(res.data.certifications || []);
-        setAchievements(res.data.achievements || []);
-        setPreferences(res.data.preferences);
+        setProfile(profileDoc);
+        setSkills(skillsArr);
+        setExperiences(expArr);
+        setEducations(eduArr);
+        setCertifications(certArr);
+        setAchievements(achArr);
+        setPreferences(prefObj);
+        setDocuments(docsArr);
 
         // Prepopulate form states
         setAboutForm({
           fullName: res.data.user?.fullName || "",
-          headline: res.data.profile?.headline || "",
-          about: res.data.profile?.about || "",
-          location: res.data.profile?.location || "",
-          dob: res.data.profile?.dob || "",
-          qualification: res.data.profile?.qualification || "",
-          gender: res.data.profile?.gender || "",
-          maritalStatus: res.data.profile?.maritalStatus || "",
-          languages: res.data.profile?.languages?.join(", ") || "",
-          workAuthorization: res.data.profile?.workAuthorization || "",
-          noticePeriod: res.data.profile?.noticePeriod || res.data.preferences?.noticePeriod || "",
-          availability: res.data.profile?.availability || res.data.preferences?.availability || "",
+          headline: profileDoc?.headline || "",
+          about: profileDoc?.about || "",
+          location: profileDoc?.location || "",
+          dob: profileDoc?.dob || "",
+          qualification: profileDoc?.qualification || "",
+          gender: profileDoc?.gender || "",
+          maritalStatus: profileDoc?.maritalStatus || "",
+          languages: profileDoc?.languages?.join(", ") || "",
+          workAuthorization: profileDoc?.workAuthorization || "",
+          noticePeriod: profileDoc?.noticePeriod || prefObj?.noticePeriod || "",
+          availability: profileDoc?.availability || prefObj?.availability || "",
         });
 
-        if (res.data.preferences) {
+        if (prefObj) {
           setPrefForm({
-            preferredJobRoles: res.data.preferences.preferredJobRoles?.join(", ") || "",
-            preferredLocations: res.data.preferences.preferredLocations?.join(", ") || "",
-            employmentType: res.data.preferences.employmentType || "Full Time",
-            expectedSalary: res.data.preferences.expectedSalary || res.data.profile?.expectedSalary || "",
+            preferredJobRoles: prefObj.preferredJobRoles?.join(", ") || "",
+            preferredLocations: prefObj.preferredLocations?.join(", ") || "",
+            employmentType: prefObj.employmentType || "Full Time",
+            expectedSalary: prefObj.expectedSalary || profileDoc?.expectedSalary || "",
           });
         }
       }
@@ -395,13 +604,14 @@ const Profile = () => {
 
   const handleOpenEditExperience = (exp: CandidateExperience) => {
     setEditingExpId(exp._id);
+    const isCurrentlyWorking = exp.isCurrent ?? (exp.endDate?.toLowerCase() === "present" || !exp.endDate);
     setExpForm({
       role: exp.role || "",
       company: exp.company || "",
       location: exp.location || "Mumbai, Maharashtra",
       startDate: exp.startDate || "",
-      endDate: exp.endDate || "Present",
-      isCurrent: exp.isCurrent ?? true,
+      endDate: isCurrentlyWorking ? "Present" : exp.endDate || "",
+      isCurrent: isCurrentlyWorking,
       description: exp.description || "",
     });
     setIsExpModalOpen(true);
@@ -410,10 +620,21 @@ const Profile = () => {
   const handleSaveExperience = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const isCurrentlyWorking = expForm.isCurrent || expForm.endDate.trim().toLowerCase() === "present";
+      const payload = {
+        role: expForm.role.trim(),
+        company: expForm.company.trim(),
+        location: expForm.location.trim(),
+        startDate: expForm.startDate.trim(),
+        endDate: isCurrentlyWorking ? "Present" : expForm.endDate.trim(),
+        isCurrent: isCurrentlyWorking,
+        description: expForm.description.trim(),
+      };
+
       if (editingExpId) {
-        await updateCandidateExperienceApi(editingExpId, expForm);
+        await updateCandidateExperienceApi(editingExpId, payload);
       } else {
-        await addCandidateExperienceApi(expForm);
+        await addCandidateExperienceApi(payload);
       }
       setIsExpModalOpen(false);
       setEditingExpId(null);
@@ -443,6 +664,7 @@ const Profile = () => {
       startYear: "",
       endYear: "",
       grade: "",
+      fileUrl: "",
     });
     setIsEduModalOpen(true);
   };
@@ -456,6 +678,7 @@ const Profile = () => {
       startYear: edu.startYear || "",
       endYear: edu.endYear || "",
       grade: edu.grade || "",
+      fileUrl: edu.fileUrl || "",
     });
     setIsEduModalOpen(true);
   };
@@ -495,6 +718,7 @@ const Profile = () => {
         issuingOrganization: "",
         issueDate: "",
         credentialId: "",
+        fileUrl: "",
       });
       fetchProfileData();
     } catch (err) {
@@ -521,6 +745,7 @@ const Profile = () => {
         organization: "",
         date: "",
         description: "",
+        fileUrl: "",
       });
       fetchProfileData();
     } catch (err) {
@@ -537,18 +762,33 @@ const Profile = () => {
     }
   };
 
+  const handleOpenEditPreferences = () => {
+    const currentPref = preferences || profile?.preferences;
+    setPrefForm({
+      preferredJobRoles: currentPref?.preferredJobRoles?.join(", ") || "",
+      preferredLocations: currentPref?.preferredLocations?.join(", ") || "",
+      employmentType: currentPref?.employmentType || "Full Time",
+      expectedSalary: currentPref?.expectedSalary || profile?.expectedSalary || "",
+    });
+    setIsEditPrefOpen(true);
+  };
+
   const handleSavePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const rolesArray = prefForm.preferredJobRoles.split(",").map((s) => s.trim()).filter(Boolean);
       const locsArray = prefForm.preferredLocations.split(",").map((s) => s.trim()).filter(Boolean);
 
-      await updateCandidatePreferencesApi({
+      const res = await updateCandidatePreferencesApi({
         preferredJobRoles: rolesArray,
         preferredLocations: locsArray,
         employmentType: prefForm.employmentType,
         expectedSalary: prefForm.expectedSalary,
       });
+
+      if (res.success && res.data) {
+        setPreferences(res.data);
+      }
 
       setIsEditPrefOpen(false);
       fetchProfileData();
@@ -627,11 +867,25 @@ const Profile = () => {
                 className="w-28 h-28 rounded-full object-cover ring-4 ring-blue-50"
                 alt={user?.fullName || "Candidate"}
               />
+              <input
+                type="file"
+                ref={avatarInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
               <button
-                title="S3 Upload feature coming soon"
-                className="absolute bottom-0 right-0 bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 rounded-full p-2 shadow"
+                type="button"
+                onClick={handleAvatarClick}
+                disabled={uploadingAvatar}
+                title="Upload Profile Photo to S3"
+                className="absolute bottom-0 right-0 bg-white border border-blue-100 text-blue-700 hover:bg-blue-50 rounded-full p-2 shadow transition-all"
               >
-                <Camera className="w-4 h-4" />
+                {uploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
               </button>
             </div>
             <div className="flex-1 text-center md:text-left">
@@ -833,7 +1087,7 @@ const Profile = () => {
           )}
 
           {/* EDUCATION TAB */}
-          {(activeTab === "Education" || activeTab === "About Me") && (
+          {activeTab === "Education" && (
             <section className="profile-card bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -883,6 +1137,16 @@ const Profile = () => {
                         </div>
                         <p className="text-xs text-blue-700 font-medium">{edu.fieldOfStudy}</p>
                         <p className="text-xs text-slate-600 mt-1">{edu.institution}</p>
+                        {edu.fileUrl && (
+                          <a
+                            href={edu.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 font-semibold hover:underline mt-2 bg-blue-50 px-2.5 py-1 rounded"
+                          >
+                            <Paperclip className="w-3.5 h-3.5" /> View Certificate
+                          </a>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500 mt-3 font-mono border-t border-slate-200/60 pt-2">
                         {edu.startYear} - {edu.endYear} {edu.grade ? `| ${edu.grade}` : ""}
@@ -895,7 +1159,7 @@ const Profile = () => {
           )}
 
           {/* SKILLS TAB */}
-          {(activeTab === "Skills" || activeTab === "About Me") && (
+          {activeTab === "Skills" && (
             <section className="profile-card bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -977,6 +1241,16 @@ const Profile = () => {
                         <h4 className="font-semibold text-sm text-slate-900">{c.title}</h4>
                         <p className="text-xs text-slate-600 mt-0.5">{c.issuingOrganization}</p>
                         {c.credentialId && <p className="text-[11px] text-slate-400 font-mono mt-1">ID: {c.credentialId}</p>}
+                        {c.fileUrl && (
+                          <a
+                            href={c.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 font-semibold hover:underline mt-2 bg-blue-50 px-2.5 py-1 rounded"
+                          >
+                            <Paperclip className="w-3.5 h-3.5" /> View Certificate
+                          </a>
+                        )}
                       </div>
                       <button onClick={() => handleDeleteCert(c._id)} className="text-rose-600 p-1 hover:bg-rose-50 rounded">
                         <Trash2 className="w-4 h-4" />
@@ -989,7 +1263,7 @@ const Profile = () => {
           )}
 
           {/* ACHIEVEMENTS TAB */}
-          {(activeTab === "Achievements" || activeTab === "About Me") && (
+          {activeTab === "Achievements" && (
             <section className="profile-card bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-bold text-slate-800 text-base flex items-center gap-2">
@@ -1025,6 +1299,16 @@ const Profile = () => {
                         {ach.organization && <p className="text-xs text-blue-700 font-medium mt-0.5">{ach.organization}</p>}
                         {ach.date && <p className="text-[11px] text-slate-500 mt-1 font-mono">{ach.date}</p>}
                         {ach.description && <p className="text-xs text-slate-600 mt-2 bg-white p-2.5 rounded border border-slate-100">{ach.description}</p>}
+                        {ach.fileUrl && (
+                          <a
+                            href={ach.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 font-semibold hover:underline mt-2 bg-blue-50 px-2.5 py-1 rounded"
+                          >
+                            <Paperclip className="w-3.5 h-3.5" /> View Document
+                          </a>
+                        )}
                       </div>
                       <button onClick={() => handleDeleteAchieve(ach._id)} className="text-rose-600 p-1 hover:bg-rose-50 rounded">
                         <Trash2 className="w-4 h-4" />
@@ -1044,7 +1328,7 @@ const Profile = () => {
                   <Target className="w-5 h-5 text-blue-700" /> Career Preferences
                 </h2>
                 <button
-                  onClick={() => setIsEditPrefOpen(true)}
+                  onClick={handleOpenEditPreferences}
                   className="text-xs text-blue-700 hover:bg-blue-50 font-semibold border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-1"
                 >
                   <Edit3 className="w-3.5 h-3.5" /> Edit Preferences
@@ -1093,32 +1377,68 @@ const Profile = () => {
             </button>
           </ProfileSide>
 
-          <ProfileSide title="Career Preferences" icon={<Target />} action="Edit" onAction={() => setIsEditPrefOpen(true)}>
+          <ProfileSide title="Career Preferences" icon={<Target />} action="Edit" onAction={handleOpenEditPreferences}>
             <Info label="Preferred Job Roles" value={preferences?.preferredJobRoles?.join(", ") || "-"} />
             <Info label="Preferred Locations" value={preferences?.preferredLocations?.join(", ") || "-"} />
             <Info label="Employment Type" value={preferences?.employmentType || "-"} />
             <Info label="Expected Salary" value={displayExpectedSalary} />
           </ProfileSide>
 
-          {/* Documents Section with S3 Upload Note */}
-          <ProfileSide title="Documents" icon={<FileText />}>
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded text-[11px] font-medium leading-tight">
-              ⚡ S3 Bucket Upload integration will be completed in the final phase. Current documents stored as metadata.
-            </div>
-            {["Resume", "Aadhaar Card", "PAN Card"].map((x, index) => (
-              <div key={x} className="flex gap-3 py-2.5 border-b last:border-0 border-slate-100 items-center">
-                <div className="w-7 h-7 rounded bg-blue-50 text-blue-700 grid place-items-center shrink-0">
-                  <FileText className="w-3.5 h-3.5" />
+          {/* Documents Section matching reference design */}
+          <ProfileSide
+            title="Documents"
+            icon={<FileText className="w-4 h-4" />}
+            action="Manage"
+            onAction={() => setIsDocModalOpen(true)}
+          >
+            {["Resume", "Aadhaar Card", "PAN Card"].map((presetTitle) => {
+              const doc = documents.find(
+                (d) => d.title.toLowerCase() === presetTitle.toLowerCase()
+              );
+              const defaultName = `${user?.fullName?.replace(/\s+/g, "_") || "Candidate"}_${presetTitle.replace(/\s+/g, "")}.pdf`;
+
+              return (
+                <div
+                  key={presetTitle}
+                  className="flex items-center gap-3 py-2 border-b last:border-0 border-slate-100"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900">{presetTitle}</p>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {doc ? doc.fileName : defaultName}
+                    </p>
+                    {doc?.uploadedAt && (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        Updated on {formatDateForDisplay(doc.uploadedAt.slice(0, 10))}
+                      </p>
+                    )}
+                  </div>
+                  {doc ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setDocPreset(presetTitle);
+                        setIsDocModalOpen(true);
+                      }}
+                      className="text-[11px] font-semibold text-blue-700 hover:bg-blue-50 border border-blue-200 px-2 py-0.5 rounded shrink-0"
+                    >
+                      + Upload
+                    </button>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800">{x}</p>
-                  <p className="text-[10px] text-slate-500 truncate">
-                    {index === 0 ? `${user?.fullName?.replace(/\s+/g, "_")}_Resume.pdf` : `${x}_${user?.fullName?.replace(/\s+/g, "_")}.pdf`}
-                  </p>
-                </div>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              </div>
-            ))}
+              );
+            })}
+
+            <button
+              onClick={() => setIsDocModalOpen(true)}
+              className="w-full text-xs font-bold text-blue-700 hover:text-blue-800 flex items-center justify-start gap-1 pt-2 transition-all"
+            >
+              View All Documents <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </ProfileSide>
         </aside>
       </div>
@@ -1428,12 +1748,32 @@ const Profile = () => {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">End Date</label>
                 <input
                   type="text"
-                  placeholder="e.g. Present"
-                  value={expForm.endDate}
+                  placeholder="e.g. Dec 2021 or Present"
+                  value={expForm.isCurrent ? "Present" : expForm.endDate}
+                  disabled={expForm.isCurrent}
                   onChange={(e) => setExpForm({ ...expForm, endDate: e.target.value })}
-                  className="w-full text-sm border border-slate-300 rounded-lg p-2.5"
+                  className={`w-full text-sm border border-slate-300 rounded-lg p-2.5 ${expForm.isCurrent ? "bg-slate-100 text-slate-500 cursor-not-allowed" : "bg-white"}`}
                 />
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isCurrentCheckbox"
+                checked={expForm.isCurrent}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setExpForm({
+                    ...expForm,
+                    isCurrent: checked,
+                    endDate: checked ? "Present" : expForm.endDate === "Present" ? "" : expForm.endDate,
+                  });
+                }}
+                className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+              />
+              <label htmlFor="isCurrentCheckbox" className="text-xs font-medium text-slate-700 cursor-pointer">
+                I am currently working in this role
+              </label>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">Description / Key Responsibilities</label>
@@ -1522,6 +1862,23 @@ const Profile = () => {
                 className="w-full text-sm border border-slate-300 rounded-lg p-2.5"
               />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Attach Degree / Marksheet (S3 Document)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleEduDocumentUpload}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"
+                />
+                {uploadingEduDoc && <Loader2 className="w-4 h-4 animate-spin text-blue-700 shrink-0" />}
+              </div>
+              {eduForm.fileUrl && (
+                <p className="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Certificate Attached Successfully
+                </p>
+              )}
+            </div>
             <div className="flex justify-end gap-3 pt-3">
               <button
                 type="button"
@@ -1563,6 +1920,23 @@ const Profile = () => {
                 className="w-full text-sm border border-slate-300 rounded-lg p-2.5"
                 required
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Attach Certification Document (S3 Upload)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleCertDocumentUpload}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"
+                />
+                {uploadingCertDoc && <Loader2 className="w-4 h-4 animate-spin text-blue-700 shrink-0" />}
+              </div>
+              {certForm.fileUrl && (
+                <p className="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Certificate Document Attached
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-3 pt-3">
               <button
@@ -1624,6 +1998,23 @@ const Profile = () => {
                 onChange={(e) => setAchieveForm({ ...achieveForm, description: e.target.value })}
                 className="w-full text-sm border border-slate-300 rounded-lg p-2.5"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Attach Award / Certificate Document (S3 Upload)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={handleAchieveDocumentUpload}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"
+                />
+                {uploadingAchieveDoc && <Loader2 className="w-4 h-4 animate-spin text-blue-700 shrink-0" />}
+              </div>
+              {achieveForm.fileUrl && (
+                <p className="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Achievement Document Attached
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-3 pt-3">
               <button
@@ -1704,6 +2095,136 @@ const Profile = () => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* MODAL: MANAGE & UPLOAD CANDIDATE DOCUMENTS */}
+      {isDocModalOpen && (
+        <Modal title="Manage Documents (S3 Upload)" onClose={() => setIsDocModalOpen(false)}>
+          <div className="space-y-5">
+            {/* Document Upload Form */}
+            <form onSubmit={handleUploadDocumentSubmit} className="space-y-3 bg-blue-50/60 p-4 rounded-xl border border-blue-100">
+              <h4 className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                <Upload className="w-4 h-4 text-blue-700" /> Upload Document to S3 Bucket
+              </h4>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Document Type / Preset</label>
+                <select
+                  value={docPreset}
+                  onChange={(e) => setDocPreset(e.target.value)}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white text-slate-800"
+                >
+                  <option value="Resume">Resume</option>
+                  <option value="Aadhaar Card">Aadhaar Card</option>
+                  <option value="PAN Card">PAN Card</option>
+                  <option value="Degree Certificate">Degree / Qualification Certificate</option>
+                  <option value="CA Certificate">CA / Professional Certificate</option>
+                  <option value="Experience Letter">Experience Letter</option>
+                  <option value="Other">Other Custom Document</option>
+                </select>
+              </div>
+
+              {docPreset === "Other" && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Document Title *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. GST Practitioner Certificate"
+                    value={docCustomTitle}
+                    onChange={(e) => setDocCustomTitle(e.target.value)}
+                    className="w-full text-xs border border-slate-300 rounded-lg p-2 bg-white"
+                    required
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Select File (PDF, DOCX, JPG, PNG)</label>
+                <input
+                  type="file"
+                  ref={docFileInputRef}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                  className="w-full text-xs border border-slate-300 rounded-lg p-1.5 bg-white text-slate-800"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={uploadingDoc || !docFile}
+                className="w-full bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 text-white font-semibold text-xs py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all"
+              >
+                {uploadingDoc ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" /> Uploading File to S3...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" /> Upload Document
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* List of Uploaded Documents */}
+            <div className="space-y-3 pt-1">
+              <h4 className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                <span>Uploaded Documents</span>
+                <span className="text-[11px] font-normal text-slate-500">{documents.length} File(s)</span>
+              </h4>
+
+              {documents.length === 0 ? (
+                <div className="text-center py-6 bg-slate-50 rounded-lg border border-dashed border-slate-200 p-4">
+                  <p className="text-xs text-slate-500 font-medium">No documents uploaded to S3 yet.</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Select a file above to start uploading.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc._id}
+                      className="flex items-center justify-between p-3 border border-slate-200 rounded-lg bg-white shadow-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-900 truncate">{doc.title}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{doc.fileName}</p>
+                          {doc.uploadedAt && (
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              Uploaded on {formatDateForDisplay(doc.uploadedAt.slice(0, 10))}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-700 hover:bg-blue-50 border border-blue-200 p-1.5 rounded-md flex items-center gap-1 text-xs font-semibold transition-colors"
+                          title="View Document"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => doc._id && handleDeleteDocument(doc._id)}
+                          className="text-rose-600 hover:bg-rose-50 border border-rose-200 p-1.5 rounded-md transition-colors"
+                          title="Delete Document"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </Modal>
       )}
     </div>

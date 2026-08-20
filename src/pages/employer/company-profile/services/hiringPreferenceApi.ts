@@ -17,7 +17,7 @@ export const saveHiringPreferences = async (
   const token = getAuthToken();
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/hiring-preferences`, {
+      const response = await fetch(`${API_BASE_URL}/hiring-preferences`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -25,6 +25,12 @@ export const saveHiringPreferences = async (
         },
         body: JSON.stringify(prefs),
       });
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success && json.data) {
+          prefs = json.data;
+        }
+      }
     } catch {
       // Fall back to local update
     }

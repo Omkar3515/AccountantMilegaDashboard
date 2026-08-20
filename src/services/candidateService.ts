@@ -8,6 +8,15 @@ export interface CandidateUser {
   role: string;
 }
 
+export interface CandidateDocument {
+  _id?: string;
+  title: string;
+  fileName: string;
+  fileUrl: string;
+  status?: string;
+  uploadedAt?: string;
+}
+
 export interface CandidateProfileData {
   _id: string;
   userId: string;
@@ -27,13 +36,13 @@ export interface CandidateProfileData {
   availability: string;
   isPublic: boolean;
   avatar: string;
-  documents?: Array<{
-    _id?: string;
-    title: string;
-    fileName: string;
-    fileUrl: string;
-    status: string;
-  }>;
+  documents?: CandidateDocument[];
+  preferences?: CandidatePreference;
+  skills?: CandidateSkill[];
+  experiences?: CandidateExperience[];
+  educations?: CandidateEducation[];
+  certifications?: CandidateCertification[];
+  achievements?: CandidateAchievement[];
 }
 
 export interface CandidateSkill {
@@ -65,6 +74,7 @@ export interface CandidateEducation {
   startYear: string;
   endYear: string;
   grade: string;
+  fileUrl?: string;
 }
 
 export interface CandidateCertification {
@@ -74,6 +84,7 @@ export interface CandidateCertification {
   issuingOrganization: string;
   issueDate: string;
   credentialId: string;
+  fileUrl?: string;
 }
 
 export interface CandidateAchievement {
@@ -83,6 +94,7 @@ export interface CandidateAchievement {
   organization?: string;
   date?: string;
   description?: string;
+  fileUrl?: string;
 }
 
 export interface CandidatePreference {
@@ -190,3 +202,34 @@ export const deleteCandidateAchievementApi = async (id: string) => {
   const response = await api.delete(`/candidate/achievements/${id}`);
   return response.data;
 };
+
+// --- S3 File Upload API Services ---
+export const uploadCandidateAvatarApi = async (formData: FormData) => {
+  const response = await api.post<{ success: boolean; message: string; data: { avatar: string } }>(
+    "/candidate/upload/avatar",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return response.data;
+};
+
+export const uploadCandidateDocumentApi = async (formData: FormData) => {
+  const response = await api.post<{ success: boolean; message: string; data: CandidateDocument }>(
+    "/candidate/upload/document",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
+  );
+  return response.data;
+};
+
+export const deleteCandidateDocumentApi = async (id: string) => {
+  const response = await api.delete<{ success: boolean; message: string; data: { _id: string } }>(
+    `/candidate/upload/document/${id}`
+  );
+  return response.data;
+};
+

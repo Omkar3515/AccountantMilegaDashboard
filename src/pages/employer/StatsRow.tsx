@@ -1,8 +1,36 @@
+import { useEffect, useState } from 'react';
 import { Briefcase, Users, UserCheck, Calendar, CheckCircle } from 'lucide-react';
+import { getMyJobs } from './post-job/services/jobService';
 
 const StatsRow = () => {
+  const [totalJobs, setTotalJobs] = useState<number | null>(null);
+  const [activeJobs, setActiveJobs] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchJobStats = async () => {
+      try {
+        const res = await getMyJobs();
+        if (res.success && res.data && isMounted) {
+          setTotalJobs(res.data.length);
+          setActiveJobs(res.data.filter((j: any) => j.status === 'published').length);
+        }
+      } catch {
+        // Fallback
+      }
+    };
+
+    fetchJobStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const jobsPostedValue = totalJobs !== null ? totalJobs.toString() : '0';
+  const activeJobsSubtitle = activeJobs !== null ? `${activeJobs} Active Jobs` : 'Active Jobs';
+
   const stats = [
-    { title: 'Jobs Posted', value: '12', subtitle: 'Active Jobs', subtitleColor: 'text-brand-green', icon: Briefcase, iconColor: 'text-brand-green', iconBg: 'bg-brand-light', borderColor: 'border-brand-green/20' },
+    { title: 'Jobs Posted', value: jobsPostedValue, subtitle: activeJobsSubtitle, subtitleColor: 'text-brand-green', icon: Briefcase, iconColor: 'text-brand-green', iconBg: 'bg-brand-light', borderColor: 'border-brand-green/20' },
     { title: 'Applications', value: '248', subtitle: 'Total Received', subtitleColor: 'text-blue-500', icon: Users, iconColor: 'text-blue-500', iconBg: 'bg-blue-50', borderColor: 'border-blue-100' },
     { title: 'Shortlisted', value: '36', subtitle: 'Good Matches', subtitleColor: 'text-purple-500', icon: UserCheck, iconColor: 'text-purple-500', iconBg: 'bg-purple-50', borderColor: 'border-purple-100' },
     { title: 'Interviews', value: '18', subtitle: 'This Month', subtitleColor: 'text-orange-500', icon: Calendar, iconColor: 'text-orange-500', iconBg: 'bg-orange-50', borderColor: 'border-orange-100' },

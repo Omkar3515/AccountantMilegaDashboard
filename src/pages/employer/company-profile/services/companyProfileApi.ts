@@ -83,13 +83,14 @@ export const fetchEmployerProfile = async (): Promise<FullEmployerProfileRespons
     if (response.ok) {
       const json = await response.json();
       if (json.success && json.data) {
+        const profileDoc = json.data.profile;
         const fetched: FullEmployerProfileResponse = {
-          profile: json.data.profile,
-          address: json.data.address,
-          teamMembers: json.data.teamMembers || [],
-          hiringPreferences: json.data.hiringPreferences,
-          socialLinks: json.data.socialLinks,
-          verification: json.data.verification,
+          profile: profileDoc,
+          address: json.data.address || profileDoc?.address || null,
+          teamMembers: json.data.teamMembers || profileDoc?.teamMembers || [],
+          hiringPreferences: json.data.hiringPreferences || profileDoc?.hiringPreferences || null,
+          socialLinks: json.data.socialLinks || profileDoc?.socialLinks || null,
+          verification: json.data.verification || null,
         };
         saveCachedProfileData(fetched);
         return fetched;
@@ -134,4 +135,23 @@ export const saveCompanyProfile = async (
   };
   saveCachedProfileData(updated);
   return profileData;
+};
+
+export const uploadCompanyLogoApi = async (
+  formData: FormData
+): Promise<{ success: boolean; data?: { logoUrl: string }; message?: string }> => {
+  const token = getAuthToken();
+  if (!token) return { success: false, message: 'No auth token found' };
+  try {
+    const response = await fetch(`${API_BASE_URL}/upload/logo`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    return await response.json();
+  } catch (error: any) {
+    return { success: false, message: error.message || 'Logo upload failed' };
+  }
 };

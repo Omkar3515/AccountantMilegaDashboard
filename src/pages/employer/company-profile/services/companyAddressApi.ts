@@ -4,11 +4,13 @@ import { getCachedProfileData, saveCachedProfileData } from './companyProfileApi
 const API_BASE_URL = 'http://localhost:5000/api/employer';
 
 export interface CompanyAddressData {
-  registeredAddress: string;
-  city: string;
-  state: string;
-  pincode: string;
-  country: string;
+  registeredAddress?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  country?: string;
+  latitude?: number | null;   // <- New
+  longitude?: number | null;  // <- New
 }
 
 export const saveCompanyAddress = async (
@@ -17,7 +19,7 @@ export const saveCompanyAddress = async (
   const token = getAuthToken();
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/address`, {
+      const response = await fetch(`${API_BASE_URL}/address`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -25,6 +27,12 @@ export const saveCompanyAddress = async (
         },
         body: JSON.stringify(addressData),
       });
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success && json.data) {
+          addressData = json.data;
+        }
+      }
     } catch {
       // Fall back to local update
     }

@@ -4,6 +4,7 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ProtectedRoute from "./ProtectedRoute";
 import CandidateDashboard from "../pages/candidate/Dashboard";
+// import SavedJobs from "../pages/candidate/saved-jobs/SavedJobs";
 import EmployerDashboard from "../pages/employer/Dashboard";
 
 const AppRoutes = () => {
@@ -30,6 +31,15 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      {/* <Route
+        path="/candidate/saved-jobs"
+        element={
+          <ProtectedRoute allowedRole="candidate">
+            <SavedJobs />
+          </ProtectedRoute>
+        }
+      /> */}
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
